@@ -1,0 +1,3 @@
+-keep class com.metrolauncher.model.** { *; }
+-keepattributes Signature
+-keepattributes *Annotation*

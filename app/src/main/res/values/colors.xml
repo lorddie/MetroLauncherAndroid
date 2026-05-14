@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Colori Start screen -->
+    <color name="start_bg">#000000</color>
+    <color name="wallpaper_dim">#55000000</color>
+
+    <!-- Colori drawer "Tutte le app" -->
+    <color name="drawer_bg">#FF1F1F1F</color>
+    <color name="drawer_text">#FFFFFFFF</color>
+    <color name="drawer_text_hint">#66FFFFFF</color>
+    <color name="drawer_header">#FF0078D7</color>
+    <color name="drawer_divider">#33FFFFFF</color>
+
+    <!-- Tile accent -->
+    <color name="wp_blue">#FF0078D7</color>
+
+    <!-- Dialog -->
+    <color name="dialog_bg">#FF202020</color>
+    <color name="dialog_text">#FFFFFFFF</color>
+    <color name="dialog_accent">#FF0078D7</color>
+</resources>

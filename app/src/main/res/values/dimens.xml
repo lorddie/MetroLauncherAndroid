@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Spazio tra le tile (come in WP10: ~4dp) -->
+    <dimen name="tile_gap">4dp</dimen>
+    <dimen name="tile_corner">0dp</dimen>
+</resources>

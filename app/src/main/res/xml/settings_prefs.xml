@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="@string/settings_cat_appearance">
+
+        <Preference
+            android:key="pick_wallpaper"
+            android:title="@string/pick_wallpaper_title"
+            android:summary="@string/wallpaper_using_system" />
+
+        <Preference
+            android:key="reset_wallpaper"
+            android:title="@string/reset_wallpaper_title"
+            android:summary="@string/reset_wallpaper_summary" />
+
+        <ListPreference
+            android:key="background_mode"
+            android:title="@string/background_mode_title"
+            android:summary="@string/background_mode_summary"
+            android:entries="@array/background_mode_entries"
+            android:entryValues="@array/background_mode_values"
+            android:defaultValue="normal" />
+
+        <ListPreference
+            android:key="grid_columns_choice"
+            android:title="@string/grid_columns_title"
+            android:summary="@string/grid_columns_summary"
+            android:entries="@array/grid_columns_entries"
+            android:entryValues="@array/grid_columns_values"
+            android:defaultValue="4" />
+
+        <SeekBarPreference
+            android:key="tile_opacity"
+            android:title="@string/tile_opacity_title"
+            android:summary="@string/tile_opacity_summary"
+            android:max="100"
+            android:defaultValue="100"
+            app:min="0"
+            app:showSeekBarValue="true" />
+
+        <SwitchPreferenceCompat
+            android:key="use_global_color"
+            android:title="@string/use_global_color_title"
+            android:summary="@string/use_global_color_summary"
+            android:defaultValue="false" />
+
+        <ListPreference
+            android:key="global_color_choice"
+            android:title="@string/global_color_title"
+            android:summary="@string/global_color_summary"
+            android:entries="@array/metro_color_names"
+            android:entryValues="@array/metro_color_values"
+            android:defaultValue="0"
+            android:dependency="use_global_color" />
+
+        <SwitchPreferenceCompat
+            android:key="monochrome_icons"
+            android:title="@string/monochrome_icons_title"
+            android:summary="@string/monochrome_icons_summary"
+            android:defaultValue="false" />
+
+        <ListPreference
+            android:key="text_color_mode"
+            android:title="@string/text_color_mode_title"
+            android:summary="@string/text_color_mode_summary"
+            android:entries="@array/text_color_mode_entries"
+            android:entryValues="@array/text_color_mode_values"
+            android:defaultValue="white" />
+
+        <ListPreference
+            android:key="tile_font_scale"
+            android:title="@string/tile_font_scale_title"
+            android:summary="@string/tile_font_scale_summary"
+            android:entries="@array/font_scale_entries"
+            android:entryValues="@array/font_scale_values"
+            android:defaultValue="normal" />
+
+        <ListPreference
+            android:key="drawer_font_scale"
+            android:title="@string/drawer_font_scale_title"
+            android:summary="@string/drawer_font_scale_summary"
+            android:entries="@array/font_scale_entries"
+            android:entryValues="@array/font_scale_values"
+            android:defaultValue="normal" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/settings_cat_behavior">
+
+        <SwitchPreferenceCompat
+            android:key="lock_rotation"
+            android:title="@string/lock_rotation_title"
+            android:summary="@string/lock_rotation_summary"
+            android:defaultValue="true" />
+
+        <Preference
+            android:key="notification_access"
+            android:title="@string/notification_access_title"
+            android:summary="@string/notification_access_summary" />
+
+        <Preference
+            android:key="notification_refresh"
+            android:title="Ricarica notifiche"
+            android:summary="Sincronizza manualmente le notifiche dei tile se sembrano bloccate" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/settings_cat_advanced">
+
+        <Preference
+            android:key="reset_tiles"
+            android:title="@string/reset_tiles_title"
+            android:summary="@string/reset_tiles_summary" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

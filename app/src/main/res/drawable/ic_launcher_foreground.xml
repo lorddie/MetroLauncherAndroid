@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Griglia a 4 tile stile Start screen WP. Il background è dato da ic_launcher_background. -->
+    <!-- Tile top-left (grande) -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M36,36 h20 v20 h-20 z" />
+    <!-- Tile top-right -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M60,36 h12 v12 h-12 z" />
+    <!-- Tile middle-right -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M60,52 h12 v12 h-12 z" />
+    <!-- Tile bottom -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M36,60 h36 v12 h-36 z" />
+</vector>

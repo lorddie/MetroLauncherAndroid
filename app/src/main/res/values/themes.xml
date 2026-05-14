@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Base theme - AppCompat DayNight with Material parent for dialogs -->
+    <style name="Theme.MetroLauncher" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/wp_blue</item>
+        <item name="colorPrimaryVariant">@color/wp_blue</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSecondary">@color/wp_blue</item>
+        <item name="colorOnSecondary">#FFFFFF</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@color/start_bg</item>
+        <item name="android:windowTranslucentStatus" tools:targetApi="19">true</item>
+        <item name="materialAlertDialogTheme">@style/Theme.MetroLauncher.Dialog</item>
+    </style>
+
+    <!-- Variante trasparente - per activity overlay -->
+    <style name="Theme.MetroLauncher.Transparent" parent="Theme.MetroLauncher">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation</item>
+    </style>
+
+    <!-- Dialog dark stile WP -->
+    <style name="Theme.MetroLauncher.Dialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <item name="colorSurface">@color/dialog_bg</item>
+        <item name="colorOnSurface">@color/dialog_text</item>
+        <item name="colorPrimary">@color/dialog_accent</item>
+        <item name="android:textColorPrimary">@color/dialog_text</item>
+        <item name="android:windowBackground">@color/dialog_bg</item>
+        <item name="materialAlertDialogTitleTextStyle">@style/Theme.MetroLauncher.Dialog.Title</item>
+    </style>
+
+    <style name="Theme.MetroLauncher.Dialog.Title" parent="MaterialAlertDialog.MaterialComponents.Title.Text">
+        <item name="android:textColor">@color/dialog_text</item>
+        <item name="android:fontFamily">sans-serif-light</item>
+        <item name="android:textSize">22sp</item>
+    </style>
+
+    <!-- Tema per ShareToStartActivity: activity trasparente che mostra solo il dialog
+         sopra qualunque app stia girando (es. il browser) -->
+    <style name="Theme.MetroLauncher.Translucent" parent="Theme.AppCompat.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation.Dialog</item>
+        <item name="windowActionBar">false</item>
+    </style>
+
+</resources>

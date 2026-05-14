@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/drawer_bg"
+    android:orientation="vertical"
+    android:paddingTop="32dp">
+
+    <EditText
+        android:id="@+id/search_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="4dp"
+        android:hint="@string/search_hint"
+        android:textColor="@color/drawer_text"
+        android:textColorHint="@color/drawer_text_hint"
+        android:background="@null"
+        android:inputType="text"
+        android:imeOptions="actionSearch"
+        android:textSize="22sp"
+        android:fontFamily="sans-serif-light"
+        android:autofillHints="" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginHorizontal="20dp"
+        android:background="@color/drawer_divider" />
+
+    <TextView
+        android:id="@+id/empty_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/no_apps"
+        android:padding="32dp"
+        android:gravity="center"
+        android:textColor="@color/drawer_text_hint"
+        android:visibility="gone" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/app_recycler"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingBottom="24dp"
+        android:scrollbars="none" />
+
+</LinearLayout>

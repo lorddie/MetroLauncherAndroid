@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.metrolauncher.view.SearchPullDownLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/start_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Index 0: barra di ricerca, "fisicamente sopra" la Start. Inizialmente
+         traslata fuori schermo (-barHeight). -->
+    <com.metrolauncher.view.SearchBarView
+        android:id="@+id/search_bar"
+        android:layout_width="match_parent"
+        android:layout_height="54dp" />
+
+    <!-- Index 1: il contenuto vero della Start. Avvolto in un FrameLayout per
+         poter ospitare maschera + scrollview + hint, dato che SearchPullDownLayout
+         richiede esattamente 2 figli. -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- Mask nera con "buchi" a forma di tile, visibile solo in modalità
+             "wallpaper dietro, nero tra le tile". La View segue lo scroll verticale
+             tramite translationY, così i buchi restano allineati alle tile. -->
+        <com.metrolauncher.view.TileMaskView
+            android:id="@+id/tile_mask"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/tile_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:scrollbars="none"
+            android:overScrollMode="always"
+            android:paddingTop="36dp"
+            android:paddingBottom="72dp"
+            android:clipToPadding="false">
+
+            <com.metrolauncher.view.TileGridLayout
+                android:id="@+id/tile_grid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </androidx.core.widget.NestedScrollView>
+
+        <TextView
+            android:id="@+id/hint_arrow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="18dp"
+            android:text="›"
+            android:textSize="42sp"
+            android:textColor="#EEFFFFFF"
+            android:contentDescription="@string/open_all_apps"
+            android:padding="8dp" />
+
+    </FrameLayout>
+
+</com.metrolauncher.view.SearchPullDownLayout>
