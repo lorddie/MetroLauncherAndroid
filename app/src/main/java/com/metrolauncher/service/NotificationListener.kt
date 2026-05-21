@@ -471,6 +471,24 @@ class NotificationListener : NotificationListenerService() {
             Log.d("MetroNotif", "Listener removed, total: ${staticListeners.size}")
         }
 
+        /** Returns the set of packages currently posting non-ongoing notifications.
+         *  Used by MainActivity to detect stale tile state (tiles still showing a
+         *  count after the user dismissed all notifications for that app). */
+        fun getActivePackages(): Set<String> {
+            val svc = instance ?: return emptySet()
+            return runCatching {
+                svc.activeNotifications
+                    ?.filter {
+                        (it.notification.flags and Notification.FLAG_ONGOING_EVENT) == 0 &&
+                        (it.notification.flags and Notification.FLAG_FOREGROUND_SERVICE) == 0 &&
+                        (it.notification.flags and Notification.FLAG_NO_CLEAR) == 0
+                    }
+                    ?.map { it.packageName }
+                    ?.toSet()
+                    .orEmpty()
+            }.getOrDefault(emptySet())
+        }
+
         /** Forces re-sending of all current notification broadcasts.
          *  Useful when MainActivity is reborn and lost transient tile data. */
         fun requestRebind() {

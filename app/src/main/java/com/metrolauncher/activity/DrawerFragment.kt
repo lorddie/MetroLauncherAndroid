@@ -2,6 +2,9 @@ package com.metrolauncher.activity
 
 import android.content.ComponentName
 import android.content.Intent
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.IntentFilter
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -18,6 +21,7 @@ import com.metrolauncher.MetroApp
 import com.metrolauncher.R
 import com.metrolauncher.adapter.AppListAdapter
 import com.metrolauncher.model.AppInfo
+import com.metrolauncher.service.PackageChangeReceiver
 import com.metrolauncher.util.AppLoader
 import com.metrolauncher.util.Prefs
 import kotlinx.coroutines.Dispatchers
@@ -45,6 +49,30 @@ class DrawerFragment : Fragment() {
     private var fullList: List<AppInfo> = emptyList()
     private var activeLetters: Set<String> = emptySet()
     private var accentColor: Int = 0xFF0078D7.toInt()
+
+    /** Ascolta il broadcast che PackageChangeReceiver manda quando un'app viene
+     *  installata, aggiornata o disinstallata. Invalida la cache e ricarica subito. */
+    private val appsChangedReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val app = runCatching { requireActivity().application as MetroApp }.getOrNull() ?: return
+            app.appsCache = null          // invalida cache globale
+            loadApps()                    // ricarica la lista nel drawer
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val filter = IntentFilter(PackageChangeReceiver.ACTION_APPS_CHANGED)
+        androidx.core.content.ContextCompat.registerReceiver(
+            requireContext(), appsChangedReceiver, filter,
+            androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+    }
+
+    override fun onStop() {
+        super.onStop()
+        runCatching { requireContext().unregisterReceiver(appsChangedReceiver) }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?

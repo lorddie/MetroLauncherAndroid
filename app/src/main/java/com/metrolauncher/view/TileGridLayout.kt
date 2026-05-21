@@ -281,6 +281,10 @@ class TileGridLayout @JvmOverloads constructor(
     fun hasAnyMediaTile(): Boolean = tileByView.keys.any { it.isMediaMode() }
     fun flipTile(tileId: String, mid: (() -> Unit)? = null) { viewByTileId[tileId]?.playFlipAnimation(mid) }
     fun advanceSlideshow(tileId: String) { viewByTileId[tileId]?.playSlideAnimation() }
+    /** Updates the message cycle for all Wide and Large tiles. */
+    fun updateWideLargeCycles() {
+        for ((v, t) in tileByView) if (t.size == TileSize.WIDE || t.size == TileSize.LARGE) v.updateWideLargeCycle()
+    }
     /** Updates the Live Content cycle (Icon/Preview) for all medium tiles. */
     fun updateLiveCycles() {
         for ((v, t) in tileByView) if (t.size == TileSize.MEDIUM) v.updateLiveCycle()

@@ -364,6 +364,7 @@ class TileView @JvmOverloads constructor(
     private enum class LiveContentMode { ICON, PREVIEW }
     private var liveContentMode = LiveContentMode.ICON
     private var lastModeChangeMs = 0L
+    private var prevMessageIndex: Int = -1
 
     fun playSlideAnimation() {
         slideAnimator?.cancel()
@@ -880,8 +881,10 @@ class TileView @JvmOverloads constructor(
     private fun drawMediumPreviewState(canvas: Canvas, preview: String, w: Float, h: Float) {
         val density = resources.displayMetrics.density
         val pad = 20f * density
-        // Center text a bit more vertically leaving space above and below
-        drawSlidingWrapped(canvas, preview, liveTitlePaint, pad, pad + 10f * density, w - pad * 2, maxLines = 4)
+        // Center text a bit more vertically leaving space above and below.
+        // We use drawWrappedText directly because the vertical slide (odometer) 
+        // is already handled by the translation in drawMediumTile.
+        drawWrappedText(canvas, preview, liveTitlePaint, pad, pad + 10f * density, w - pad * 2, maxLines = 4)
     }
 
     /** Manages the ICON/PREVIEW cycle for medium tiles. */
@@ -914,7 +917,7 @@ class TileView @JvmOverloads constructor(
                 playSlideAnimation()
             }
         } else {
-            if (elapsed >= 10000) { // 10s for preview
+            if (elapsed >= 5000) { // 10s for preview
                 lastModeChangeMs = now
                 if (messages.size > 1) {
                     // Switch to next message
@@ -926,6 +929,28 @@ class TileView @JvmOverloads constructor(
                     playSlideAnimation()
                 }
             }
+        }
+    }
+
+    /** Manages the message cycle for Wide and Large tiles. */
+    fun updateWideLargeCycle() {
+        val t = tile ?: return
+        if (t.size == TileSize.SMALL || t.size == TileSize.MEDIUM) return
+        val messages = t.liveMessages
+        if (messages.size < 2) return
+
+        val now = android.os.SystemClock.elapsedRealtime()
+        if (lastModeChangeMs == 0L) {
+            lastModeChangeMs = now
+            return
+        }
+        val elapsed = now - lastModeChangeMs
+
+        if (elapsed >= 6000) { // 6s cycle
+            lastModeChangeMs = now
+            prevMessageIndex = t.liveMessageIndex
+            t.liveMessageIndex = (t.liveMessageIndex + 1) % messages.size
+            playSlideAnimation()
         }
     }
 
@@ -942,7 +967,7 @@ class TileView @JvmOverloads constructor(
         xCursor += iconSize + 10f
         val preview = currentPreviewText(t)
         if (!preview.isNullOrBlank()) {
-            drawSlidingWrapped(canvas, preview, liveTitlePaint, xCursor, iconTop + iconSize * 0.15f, w - xCursor - padX, maxLines = 4)
+            drawOdometerWrappedText(canvas, t, liveTitlePaint, xCursor, iconTop + iconSize * 0.15f, w - xCursor - padX, 4)
         }
         if (t.showLabel) {
             t.customLabel?.takeIf { it.isNotBlank() }?.let { canvas.drawText(it, padX, h - 16f, labelPaint) }
@@ -961,7 +986,7 @@ class TileView @JvmOverloads constructor(
         drawIcon(canvas, xCursor, topY, iconSize)
         val preview = currentPreviewText(t)
         if (!preview.isNullOrBlank()) {
-            drawSlidingWrapped(canvas, preview, liveBodyPaint, padX, topY + iconSize + 40f, w - padX * 2, maxLines = 4)
+            drawOdometerWrappedText(canvas, t, liveBodyPaint, padX, topY + iconSize + 40f, w - padX * 2, 4)
         }
         if (t.showLabel) {
             t.customLabel?.takeIf { it.isNotBlank() }?.let { canvas.drawText(it, padX, h - 18f, labelPaint) }
@@ -978,13 +1003,39 @@ class TileView @JvmOverloads constructor(
         canvas.drawText(trimmed, x, y - offset, paint); paint.alpha = savedAlpha
     }
 
-    private fun drawSlidingWrapped(canvas: Canvas, text: String, paint: Paint, x: Float, y: Float, maxWidth: Float, maxLines: Int) {
-        if (slideProgress >= 1f) { drawWrappedText(canvas, text, paint, x, y, maxWidth, maxLines); return }
-        val savedAlpha = paint.alpha
-        val offset = (1f - slideProgress) * paint.textSize * 1.5f
-        paint.alpha = (savedAlpha * slideProgress).toInt().coerceIn(0, 255)
-        drawWrappedText(canvas, text, paint, x, y - offset, maxWidth, maxLines)
-        paint.alpha = savedAlpha
+    private fun drawOdometerWrappedText(canvas: Canvas, t: Tile, paint: Paint, x: Float, y: Float, maxWidth: Float, maxLines: Int) {
+        val messages = t.liveMessages
+        val current = if (messages.isNotEmpty()) messages[t.liveMessageIndex.coerceIn(0, messages.size - 1)] else t.liveBody ?: t.liveTitle ?: ""
+        
+        if (slideProgress >= 1f || prevMessageIndex < 0 || messages.size < 2) {
+            drawWrappedText(canvas, current, paint, x, y, maxWidth, maxLines)
+            return
+        }
+
+        val prev = messages[prevMessageIndex.coerceIn(0, messages.size - 1)]
+        val lineHeight = paint.textSize * 1.15f
+        val totalH = lineHeight * maxLines
+        
+        canvas.save()
+        // Clip text area to prevent overlap with icon/label
+        canvas.clipRect(x, y - paint.textSize, x + maxWidth, y + totalH)
+        
+        // Old text slides up and fades out
+        canvas.save()
+        canvas.translate(0f, -slideProgress * totalH)
+        paint.alpha = (255 * (1f - slideProgress)).toInt().coerceIn(0, 255)
+        drawWrappedText(canvas, prev, paint, x, y, maxWidth, maxLines)
+        canvas.restore()
+        
+        // New text slides in from bottom and fades in
+        canvas.save()
+        canvas.translate(0f, totalH - slideProgress * totalH)
+        paint.alpha = (255 * slideProgress).toInt().coerceIn(0, 255)
+        drawWrappedText(canvas, current, paint, x, y, maxWidth, maxLines)
+        canvas.restore()
+        
+        paint.alpha = 255
+        canvas.restore()
     }
 
     private fun drawIcon(canvas: Canvas, left: Float, top: Float, size: Float) {

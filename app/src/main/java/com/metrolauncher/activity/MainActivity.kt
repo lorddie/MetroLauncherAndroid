@@ -68,11 +68,9 @@ class MainActivity : AppCompatActivity(), NotificationListener.Listener {
             val canAnimate = isStartVisible && !isAppIdle()
             
             if (canAnimate) {
-                // Wide/Large tile management (classic slideshow)
-                for (t in tiles) if (t.size != TileSize.MEDIUM && (t.liveMessages.size) >= 2) { 
-                    t.liveMessageIndex = (t.liveMessageIndex + 1) % t.liveMessages.size
-                    tileGrid.advanceSlideshow(t.id) 
-                }
+                // Large/Wide tile management
+                tileGrid.updateWideLargeCycles()
+
                 // Medium tile management (new Icon/Preview cycle)
                 tileGrid.updateLiveCycles()
             }
@@ -368,14 +366,60 @@ class MainActivity : AppCompatActivity(), NotificationListener.Listener {
                     if (t.kind == com.metrolauncher.model.TileKind.FOLDER) {
                         t.liveCount = t.folderItems.sumOf { if (it.packageName == pkg) count else it.liveCount }
                     } else if (!t.notificationsDisabled) {
-                        if (removed) { t.liveCount = 0; t.liveMessages = emptyList() }
-                        else { t.liveTitle = title; t.liveBody = body; t.liveCount = count; t.liveMessages = messages; if (::tileGrid.isInitialized) tileGrid.flipTile(t.id) }
+                        if (removed) {
+                            // Reset COMPLETO: senza azzerare anche title/body, la tile
+                            // resta in "modalità live" mostrando contenuto vecchio.
+                            t.liveCount = 0; t.liveMessages = emptyList()
+                            t.liveTitle = null; t.liveBody = null
+                            t.liveMessageIndex = 0
+                        } else {
+                            t.liveTitle = title; t.liveBody = body; t.liveCount = count
+                            t.liveMessages = messages
+                            if (::tileGrid.isInitialized) tileGrid.flipTile(t.id)
+                        }
                     }
                     if (::tileGrid.isInitialized) tileGrid.updateLiveContent(t.id, t.liveTitle, t.liveBody, t.liveCount)
                 }
             }
             ensureSlideshowTicker()
         }
+    }
+
+    /**
+     * Sweep delle "notifiche fantasma": confronta i package con notifiche attive contro
+     * le tile che mostrano ancora contenuto live, e ripulisce quelle che non hanno più
+     * notifiche corrispondenti.
+     *
+     * Indispensabile dopo onResume() perché `requestRebind` republish-a solo per i
+     * package con notifiche attive — se WhatsApp aveva 3 messaggi non letti e l'utente
+     * li ha tutti aperti, WhatsApp non è più in `activeNotifications` e la tile
+     * resterebbe a "3" all'infinito.
+     */
+    private fun sweepGhostNotifications() {
+        val activePkgs = NotificationListener.getActivePackages()
+        var anyCleared = false
+        tiles.forEach { t ->
+            val hasLiveContent = t.liveCount > 0 ||
+                                  t.liveMessages.isNotEmpty() ||
+                                  !t.liveTitle.isNullOrBlank() ||
+                                  !t.liveBody.isNullOrBlank()
+            if (!hasLiveContent) return@forEach
+            if (t.kind == com.metrolauncher.model.TileKind.FOLDER) {
+                // Per le folder: aggrega solo i conteggi degli items il cui package è
+                // ancora attivo
+                val active = t.folderItems.filter { it.packageName in activePkgs }
+                t.liveCount = active.sumOf { it.liveCount }
+                if (::tileGrid.isInitialized) tileGrid.updateLiveContent(t.id, null, null, t.liveCount)
+                anyCleared = true
+            } else if (t.packageName !in activePkgs) {
+                // App non più attiva → reset completo
+                t.liveCount = 0; t.liveMessages = emptyList()
+                t.liveTitle = null; t.liveBody = null; t.liveMessageIndex = 0
+                if (::tileGrid.isInitialized) tileGrid.updateLiveContent(t.id, null, null, 0)
+                anyCleared = true
+            }
+        }
+        if (anyCleared) ensureSlideshowTicker()
     }
 
     fun goToStartPage() { if (::pager.isInitialized) pager.currentItem = LauncherPagerAdapter.PAGE_START }
@@ -617,7 +661,12 @@ class MainActivity : AppCompatActivity(), NotificationListener.Listener {
     private fun updateActivity() { val wasIdle = isAppIdle(); lastUserActivityMs = android.os.SystemClock.elapsedRealtime(); if (wasIdle) { ensureMediaTicker(); ensureSlideshowTicker(); ensureSpecialTileTickers() } }
     override fun onUserInteraction() { super.onUserInteraction(); updateActivity() }
     override fun onResume() {
-        super.onResume(); applyUserPreferences(); setupWallpaper(); NotificationListener.requestRebind()
+        super.onResume(); applyUserPreferences(); setupWallpaper()
+        // Ordine importante: prima ripuliamo le tile fantasma (notifiche scomparse),
+        // poi richiediamo il rebind delle notifiche attive. requestRebind da solo non
+        // basta perché non manda update per i package senza notifiche.
+        sweepGhostNotifications()
+        NotificationListener.requestRebind()
         if (::pager.isInitialized && pager.currentItem == LauncherPagerAdapter.PAGE_START && ::tileGrid.isInitialized) tileGrid.playEntranceAnimation()
 
         // Check if ShareToStartActivity (or any other external source) added
@@ -643,6 +692,7 @@ class MainActivity : AppCompatActivity(), NotificationListener.Listener {
             ensureSlideshowTicker()
             ensureSpecialTileTickers()
         }
+        sweepGhostNotifications()
         NotificationListener.requestRebind()
     }
     override fun onStop() {
