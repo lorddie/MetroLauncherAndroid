@@ -11,7 +11,7 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowBackground">@color/start_bg</item>
-        <item name="android:windowTranslucentStatus" tools:targetApi="19">true</item>
+        <item name="android:windowTranslucentStatus" tools:targetApi="19">false</item>
         <item name="materialAlertDialogTheme">@style/Theme.MetroLauncher.Dialog</item>
     </style>
 

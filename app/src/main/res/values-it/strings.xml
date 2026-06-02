@@ -71,6 +71,7 @@
     <string name="lock_rotation_summary">Mantieni la Start sempre in verticale</string>
 
     <string name="change_wallpaper_title">Cambia sfondo</string>
+    <string name="crop_wallpaper_title">Ritaglia sfondo</string>
     <string name="change_wallpaper_summary">Scegli un\'immagine o uno sfondo animato</string>
     <string name="reset_tiles_title">Ripristina Start</string>
     <string name="reset_tiles_summary">Cancella tutte le tile e ricomincia</string>

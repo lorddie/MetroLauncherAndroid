@@ -71,6 +71,7 @@
     <string name="lock_rotation_summary">Keep Start screen always in vertical portrait</string>
 
     <string name="change_wallpaper_title">Change wallpaper</string>
+    <string name="crop_wallpaper_title">Crop wallpaper</string>
     <string name="change_wallpaper_summary">Choose an image or a live wallpaper</string>
     <string name="reset_tiles_title">Reset Start</string>
     <string name="reset_tiles_summary">Clear all tiles and start over</string>

@@ -55,6 +55,12 @@
             android:exported="false"
             android:parentActivityName=".activity.MainActivity" />
 
+        <activity
+            android:name=".activity.WallpaperCropActivity"
+            android:label="Crop Wallpaper"
+            android:theme="@style/Theme.MetroLauncher"
+            android:exported="false" />
+
         <!--
             ShareToStartActivity: riceve URL condivisi da Brave/Chrome/Firefox tramite il
             tasto "Condividi". Appare come voce "Aggiungi a Start" nel menu di condivisione.

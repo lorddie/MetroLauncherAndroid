@@ -53,6 +53,7 @@ class MainActivity : AppCompatActivity(), NotificationListener.Listener {
     private lateinit var hintArrow: TextView
     private lateinit var searchBar: com.metrolauncher.view.SearchBarView
     private lateinit var pager: androidx.viewpager2.widget.ViewPager2
+    private lateinit var statusBarBg: View
 
     private var editMode = false
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -214,9 +215,18 @@ class MainActivity : AppCompatActivity(), NotificationListener.Listener {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_main)
-        window.statusBarColor = 0; window.navigationBarColor = 0
+        window.navigationBarColor = 0
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
         wallpaperView = findViewById(R.id.wallpaper_view); pager = findViewById(R.id.pager)
+        statusBarBg = findViewById(R.id.status_bar_bg)
+        
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(statusBarBg) { v, insets ->
+            val bars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars())
+            v.layoutParams.height = bars.top
+            v.requestLayout()
+            insets
+        }
+
         pager.adapter = LauncherPagerAdapter(this); pager.offscreenPageLimit = 1
         pager.registerOnPageChangeCallback(object : androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) { 
@@ -228,7 +238,7 @@ class MainActivity : AppCompatActivity(), NotificationListener.Listener {
                 }
             }
         })
-        setupWallpaper(); loadTileDataOnly(); maybePromptNotificationAccess()
+        applyUserPreferences(); setupWallpaper(); loadTileDataOnly(); maybePromptNotificationAccess()
     }
 
     fun onStartFragmentReady(fragment: com.metrolauncher.activity.StartFragment) {
@@ -681,13 +691,41 @@ class MainActivity : AppCompatActivity(), NotificationListener.Listener {
 
     private fun applyUserPreferences() {
         requestedOrientation = if (Prefs.bool(this, Prefs.KEY_LOCK_ROTATION, true)) android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT else android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        
+        val useGlobal = Prefs.bool(this, Prefs.KEY_USE_GLOBAL_COLOR, false)
+        val idx = Prefs.int(this, Prefs.KEY_GLOBAL_COLOR_INDEX, 0)
+        val color = if (idx == Prefs.CUSTOM_COLOR_SENTINEL) Prefs.int(this, Prefs.KEY_GLOBAL_COLOR_CUSTOM, 0xFF0078D7.toInt()) else ColorUtils.METRO_COLORS[idx.coerceIn(0, ColorUtils.METRO_COLORS.size - 1)]
+        val alpha = Prefs.int(this, Prefs.KEY_TILE_OPACITY, 100) / 100f
+        val colorWithAlpha = android.graphics.Color.argb((alpha * 255).toInt(), android.graphics.Color.red(color), android.graphics.Color.green(color), android.graphics.Color.blue(color))
+
+        // Modern Edge-to-Edge handling
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.navigationBarColor = android.graphics.Color.TRANSPARENT
+        
+        if (useGlobal) {
+            window.statusBarColor = android.graphics.Color.TRANSPARENT
+            statusBarBg.setBackgroundColor(colorWithAlpha)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                window.isStatusBarContrastEnforced = false
+                window.isNavigationBarContrastEnforced = false
+            }
+            WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = !ColorUtils.isDark(color)
+        } else {
+            window.statusBarColor = android.graphics.Color.TRANSPARENT
+            statusBarBg.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                window.isStatusBarContrastEnforced = false
+            }
+            WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
+        }
+
         if (!::tileGrid.isInitialized) return
         tileGrid.setColumns(Prefs.gridColumns(this)); tileGrid.setGlobalOpacity(Prefs.int(this, Prefs.KEY_TILE_OPACITY, 100) / 100f)
-        val useGlobal = Prefs.bool(this, Prefs.KEY_USE_GLOBAL_COLOR, false)
         if (useGlobal) {
-            val idx = Prefs.int(this, Prefs.KEY_GLOBAL_COLOR_INDEX, 0); val color = if (idx == Prefs.CUSTOM_COLOR_SENTINEL) Prefs.int(this, Prefs.KEY_GLOBAL_COLOR_CUSTOM, 0xFF0078D7.toInt()) else ColorUtils.METRO_COLORS[idx.coerceIn(0, ColorUtils.METRO_COLORS.size - 1)]
             tileGrid.setGlobalColorOverride(color); if (::searchBar.isInitialized) searchBar.barColor = color
-        } else { tileGrid.setGlobalColorOverride(null); if (::searchBar.isInitialized) searchBar.barColor = 0xFF352D25.toInt() }
+        } else {
+            tileGrid.setGlobalColorOverride(null); if (::searchBar.isInitialized) searchBar.barColor = 0xFF352D25.toInt()
+        }
         tileGrid.setMonochromeIcons(Prefs.bool(this, Prefs.KEY_MONOCHROME_ICONS, false))
         tileGrid.setTextColor(if (Prefs.string(this, Prefs.KEY_TEXT_COLOR_MODE, "white") == "black") android.graphics.Color.BLACK else android.graphics.Color.WHITE)
         applyBackgroundMode(Prefs.string(this, Prefs.KEY_BACKGROUND_MODE, "normal") ?: "normal")

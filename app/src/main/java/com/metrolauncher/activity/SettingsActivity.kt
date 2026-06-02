@@ -59,6 +59,19 @@ class SettingsActivity : AppCompatActivity() {
 
     class SettingsFragment : PreferenceFragmentCompat() {
 
+        // Launcher for the crop activity
+        private val cropWallpaper = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode == RESULT_OK) {
+                val uriStr = result.data?.getStringExtra("cropped_uri")
+                if (uriStr != null) {
+                    Prefs.setString(requireContext(), Prefs.KEY_WALLPAPER_URI, uriStr)
+                    updateWallpaperSummary()
+                }
+            }
+        }
+
         // Image picker for custom wallpaper
         private val pickWallpaper = registerForActivityResult(
             ActivityResultContracts.OpenDocument()
@@ -69,8 +82,11 @@ class SettingsActivity : AppCompatActivity() {
                         uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
                     )
                 }
-                Prefs.setString(requireContext(), Prefs.KEY_WALLPAPER_URI, uri.toString())
-                updateWallpaperSummary()
+                // Launch crop activity instead of saving directly
+                val intent = Intent(requireContext(), WallpaperCropActivity::class.java).apply {
+                    putExtra("uri", uri.toString())
+                }
+                cropWallpaper.launch(intent)
             }
         }
 
