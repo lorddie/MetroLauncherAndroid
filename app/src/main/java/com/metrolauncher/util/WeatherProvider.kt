@@ -108,17 +108,20 @@ object WeatherProvider {
             }
         } else {
             // Legacy fallback: SingleUpdate
+            @Suppress("DEPRECATION")
             val listener = object : android.location.LocationListener {
                 override fun onLocationChanged(location: Location) {
                     lm.removeUpdates(this)
                     if (continuation.isActive) continuation.resume(location)
                 }
+                @Deprecated("Deprecated in Java")
                 override fun onStatusChanged(p: String?, s: Int, e: android.os.Bundle?) {}
                 override fun onProviderEnabled(p: String) {}
                 override fun onProviderDisabled(p: String) {}
             }
             val handler = Handler(Looper.getMainLooper())
             // Try Network first (fast, works indoors)
+            @Suppress("DEPRECATION")
             if (lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
                 lm.requestSingleUpdate(LocationManager.NETWORK_PROVIDER, listener, handler.looper)
             } else if (lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -173,10 +176,10 @@ object WeatherProvider {
             Snapshot(
                 tempC = o.getDouble("temp"),
                 locationName = o.getString("loc"),
-                condition = WeatherCondition.values()[o.getInt("cond")],
+                condition = WeatherCondition.entries[o.getInt("cond")],
                 isNight = o.getBoolean("night"),
                 fetchedAtMs = o.getLong("at"),
-                nextCondition = if (o.has("next_cond")) WeatherCondition.values()[o.getInt("next_cond")] else null,
+                nextCondition = if (o.has("next_cond")) WeatherCondition.entries[o.getInt("next_cond")] else null,
                 nextConditionTime = if (o.has("next_at")) o.getLong("next_at") else null
             ).let { if (System.currentTimeMillis() - it.fetchedAtMs > CACHE_MAX_AGE_MS) null else it }
         } catch (_: Throwable) { null }
@@ -296,42 +299,6 @@ object WeatherProvider {
             Log.e("WeatherProvider", "Fetch failed", e)
             null
         }
-    }
-
-    /**
-     * City suggestion search for autocomplete. Uses Open-Meteo's geocoding-api 
-     * which returns up to `count` results ordered by population.
-     * Output: list of "Name, State" strings ready to show in a dropdown.
-     *
-     * Example: query="bolo" → ["Bologna, IT", "Bolobouni, ML", ...]
-     *
-     * Returns empty list if network is down or query is too short. MUST be called from IO.
-     */
-    suspend fun searchCitySuggestions(query: String): List<String> = withContext(Dispatchers.IO) {
-        if (query.length < 2) return@withContext emptyList()
-        val url = "https://geocoding-api.open-meteo.com/v1/search" +
-            "?name=${java.net.URLEncoder.encode(query, "UTF-8")}" +
-            "&count=5" +
-            "&language=${Locale.getDefault().language}"
-        val json = httpGetJson(url) ?: return@withContext emptyList()
-        val results = json.optJSONArray("results") ?: return@withContext emptyList()
-        val out = mutableListOf<String>()
-        for (i in 0 until results.length()) {
-            val o = results.optJSONObject(i) ?: continue
-            val name = o.optString("name", "")
-            val country = o.optString("country_code", "").uppercase(Locale.US)
-            val admin = o.optString("admin1", "")
-            // Disambiguator: for cities in large countries include the region
-            val display = when {
-                name.isBlank() -> continue
-                country.isNotBlank() && admin.isNotBlank() -> "$name, $admin, $country"
-                country.isNotBlank() -> "$name, $country"
-                admin.isNotBlank() -> "$name, $admin"
-                else -> name
-            }
-            if (display !in out) out += display
-        }
-        out
     }
 
     private fun reverseGeocode(lat: Double, lon: Double): String? {

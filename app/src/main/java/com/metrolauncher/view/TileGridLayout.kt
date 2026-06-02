@@ -13,7 +13,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.DecelerateInterpolator
 import com.metrolauncher.model.Tile
-import com.metrolauncher.model.TileKind
 import com.metrolauncher.model.TileSize
 import com.metrolauncher.util.GridPacker
 import com.metrolauncher.util.MediaInfoCache
@@ -429,9 +428,9 @@ class TileGridLayout @JvmOverloads constructor(
         val cell = (width - gap * (columns + 1)) / columns.coerceAtLeast(1); val cpg = cell + gap
         val ol = gap + ot.col * cpg
         val otop = gap + ot.row * cpg
-        val or_ = ol + cell * ot.size.cols + gap * (ot.size.cols - 1)
+        val or = ol + cell * ot.size.cols + gap * (ot.size.cols - 1)
         val ob = otop + cell * ot.size.rows + gap * (ot.size.rows - 1)
-        val ix = maxOf(0, minOf(draggedR, or_) - maxOf(draggedL, ol))
+        val ix = maxOf(0, minOf(draggedR, or) - maxOf(draggedL, ol))
         val iy = maxOf(0, minOf(draggedB, ob) - maxOf(draggedT, otop))
         val interArea = ix.toFloat() * iy.toFloat()
         // Reference: the area of the dragged tile (usually smaller/equal to target)

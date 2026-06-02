@@ -1,8 +1,9 @@
 package com.metrolauncher.activity
 
+import android.annotation.SuppressLint
 import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
@@ -16,6 +17,8 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.graphics.drawable.toDrawable
+import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.widget.NestedScrollView
@@ -24,9 +27,11 @@ import com.metrolauncher.model.AppInfo
 import com.metrolauncher.model.Tile
 import com.metrolauncher.model.TileSize
 import com.metrolauncher.service.NotificationListener
+import com.metrolauncher.model.TileKind
 import com.metrolauncher.util.AppLoader
 import com.metrolauncher.util.ColorUtils
 import com.metrolauncher.util.GridPacker
+import com.metrolauncher.util.KnownPackages
 import com.metrolauncher.util.MediaInfoCache
 import com.metrolauncher.util.Prefs
 import com.metrolauncher.util.TileStorage
@@ -51,6 +56,26 @@ class MainActivity : AppCompatActivity(), NotificationListener.Listener {
 
     private var editMode = false
     private val mainHandler = Handler(Looper.getMainLooper())
+
+    private var pendingGalleryTileId: String? = null
+    private val pickGalleryFolder = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.OpenDocumentTree()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            val tileId = pendingGalleryTileId ?: return@registerForActivityResult
+            runCatching {
+                contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                val tile = tiles.firstOrNull { it.id == tileId }
+                if (tile != null) {
+                    tile.kind = TileKind.GALLERY
+                    tile.gallerySourceUri = uri.toString()
+                    storage.save(tiles)
+                    loadTiles()
+                }
+            }
+        }
+        pendingGalleryTileId = null
+    }
 
     private val mediaListener = MediaInfoCache.Listener { pkg ->
         mainHandler.post { if (::tileGrid.isInitialized) { tileGrid.updateMediaForPackage(pkg, MediaInfoCache.get(pkg)); ensureMediaTicker() } }
@@ -247,7 +272,7 @@ class MainActivity : AppCompatActivity(), NotificationListener.Listener {
         }
         // Long-press on mini-tile = drag-out. Remove from folder, add to tiles[] 
         // in free position, and continue programmatic drag.
-        tileGrid.onMiniTileLongPress = dragOut@{ mini, miniView, localX, localY ->
+        tileGrid.onMiniTileLongPress = dragOut@{ mini, _, localX, localY ->
             val folderId = tileGrid.expandedFolderId() ?: return@dragOut
             val folder = tiles.firstOrNull { it.id == folderId } ?: return@dragOut
             // 1. Remove from folder
@@ -341,15 +366,6 @@ class MainActivity : AppCompatActivity(), NotificationListener.Listener {
                 }
                 .show()
         }
-    }
-
-    private fun openFolder(folder: Tile) {
-        val labels = folder.folderItems.map { it.customLabel ?: it.packageName }.toTypedArray()
-        AlertDialog.Builder(this, R.style.Theme_MetroLauncher_Dialog).setTitle(folder.customLabel ?: "Folder").setItems(labels) { _, w ->
-            val item = folder.folderItems[w]; launchApp(item.packageName, item.activityName)
-        }.setNeutralButton("Remove from folder") { _, _ ->
-            showRemoveFromFolderDialog(folder)
-        }.show()
     }
 
     private fun showRemoveFromFolderDialog(folder: Tile) {
@@ -490,7 +506,7 @@ class MainActivity : AppCompatActivity(), NotificationListener.Listener {
 
     private fun launchWebLink(tile: Tile) {
         val url = tile.webUrl ?: return
-        runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+        runCatching { startActivity(Intent(Intent.ACTION_VIEW, url.toUri()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
     }
 
     fun pinApp(app: AppInfo) {
@@ -515,12 +531,16 @@ class MainActivity : AppCompatActivity(), NotificationListener.Listener {
         }
         val editLabel = android.widget.EditText(this).apply {
             hint = getString(R.string.name_hint)
-            setHintTextColor(0x66FFFFFF.toInt()); setTextColor(0xFFFFFFFF.toInt()); background = null
+            setHintTextColor(0x66FFFFFF)
+            setTextColor(0xFFFFFFFF.toInt())
+            background = null
             textSize = 18f
         }
         val editUrl = android.widget.EditText(this).apply {
             hint = getString(R.string.url_hint)
-            setHintTextColor(0x66FFFFFF.toInt()); setTextColor(0xFFFFFFFF.toInt()); background = null
+            setHintTextColor(0x66FFFFFF)
+            setTextColor(0xFFFFFFFF.toInt())
+            background = null
             textSize = 16f
             inputType = android.text.InputType.TYPE_TEXT_VARIATION_URI or android.text.InputType.TYPE_CLASS_TEXT
         }
@@ -581,6 +601,18 @@ class MainActivity : AppCompatActivity(), NotificationListener.Listener {
     }
 
     private fun resizeTile(tile: Tile, newSize: TileSize) { tile.size = newSize; relayoutAll() }
+
+    private fun promoteTile(tile: Tile, kind: TileKind) {
+        if (kind == TileKind.GALLERY && tile.gallerySourceUri == null) {
+            pendingGalleryTileId = tile.id
+            pickGalleryFolder.launch(null)
+            return
+        }
+        tile.kind = kind
+        storage.save(tiles)
+        loadTiles()
+    }
+
     private fun unpinTile(tile: Tile) {
         tiles.remove(tile)
         if (::tileGrid.isInitialized) tileGrid.removeTile(tile.id)
@@ -596,6 +628,20 @@ class MainActivity : AppCompatActivity(), NotificationListener.Listener {
             entries += Entry(getString(R.string.resize_wide)) { resizeTile(tile, TileSize.WIDE) }
             entries += Entry(getString(R.string.resize_large)) { resizeTile(tile, TileSize.LARGE) }
         }
+
+        if (tile.kind == TileKind.APP) {
+            if (KnownPackages.isCalendar(tile.packageName)) entries += Entry(getString(R.string.promote_to_calendar)) { promoteTile(tile, TileKind.CALENDAR) }
+            if (KnownPackages.isClock(tile.packageName)) entries += Entry(getString(R.string.promote_to_clock)) { promoteTile(tile, TileKind.CLOCK) }
+            if (KnownPackages.isWeather(tile.packageName)) entries += Entry(getString(R.string.promote_to_weather)) { promoteTile(tile, TileKind.WEATHER) }
+            if (KnownPackages.isGallery(tile.packageName)) entries += Entry(getString(R.string.promote_to_gallery)) { promoteTile(tile, TileKind.GALLERY) }
+        } else if (tile.kind != TileKind.FOLDER && tile.kind != TileKind.WEB_LINK) {
+            entries += Entry(getString(R.string.demote_to_app)) { promoteTile(tile, TileKind.APP) }
+        }
+
+        if (tile.kind == TileKind.GALLERY) {
+            entries += Entry(getString(R.string.change_gallery_folder)) { pendingGalleryTileId = tile.id; pickGalleryFolder.launch(null) }
+        }
+
         if (tile.kind == com.metrolauncher.model.TileKind.WEATHER) {
             entries += Entry(getString(R.string.update_weather)) { scope.launch { val snap = com.metrolauncher.util.WeatherProvider.fetchNow(this@MainActivity, tile.weatherLocationOverride); if (snap != null) tileGrid.setWeatherSnapshot(tile.id, snap) } }
         }
@@ -657,10 +703,92 @@ class MainActivity : AppCompatActivity(), NotificationListener.Listener {
         }
     }
 
+    @SuppressLint("MissingPermission")
     private fun setupWallpaper() {
         val customUri = Prefs.string(this, Prefs.KEY_WALLPAPER_URI)
-        if (customUri != null) runCatching { contentResolver.openInputStream(Uri.parse(customUri))?.use { android.graphics.BitmapFactory.decodeStream(it)?.let { bmp -> wallpaperView.setImageBitmap(bmp); onWallpaperBitmapReady(); return } } }
-        runCatching { val drw = android.app.WallpaperManager.getInstance(this).drawable; wallpaperView.setImageDrawable(drw); onWallpaperBitmapReady() }
+        if (customUri != null) {
+            scope.launch {
+                val bmp = withContext(Dispatchers.IO) {
+                    runCatching {
+                        contentResolver.openInputStream(customUri.toUri())?.use { stream ->
+                            // 1. First decode with inJustDecodeBounds=true to check dimensions
+                            val options = android.graphics.BitmapFactory.Options().apply {
+                                inJustDecodeBounds = true
+                            }
+                            // We need a fresh stream to decode bounds then content
+                            android.graphics.BitmapFactory.decodeStream(stream, null, options)
+                            
+                            // 2. Calculate inSampleSize to downsample if image is huge
+                            // (Targeting roughly screen resolution to avoid OOM)
+                            val dm = resources.displayMetrics
+                            options.inSampleSize = calculateInSampleSize(options, dm.widthPixels, dm.heightPixels)
+                            options.inJustDecodeBounds = false
+                            
+                            // 3. Decode the actual bitmap downsampled
+                            // Re-open stream because previous one was consumed
+                            contentResolver.openInputStream(customUri.toUri())?.use { stream2 ->
+                                android.graphics.BitmapFactory.decodeStream(stream2, null, options)
+                            }
+                        }
+                    }.getOrNull()
+                }
+                if (bmp != null) {
+                    wallpaperView.setImageBitmap(bmp)
+                    onWallpaperBitmapReady()
+                } else {
+                    // Fallback if custom fails
+                    loadSystemWallpaper()
+                }
+            }
+            return
+        }
+        loadSystemWallpaper()
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun loadSystemWallpaper() {
+        runCatching {
+            val wm = android.app.WallpaperManager.getInstance(this)
+            val drw = wm.drawable ?: return@runCatching
+            if (drw is android.graphics.drawable.BitmapDrawable) {
+                val bmp = drw.bitmap
+                if (bmp != null) {
+                    val dm = resources.displayMetrics
+                    // Use a safe pixel limit (roughly 2x screen pixels) to avoid Canvas "too large bitmap" crash
+                    val maxPixels = dm.widthPixels * dm.heightPixels * 2
+                    val actualPixels = bmp.width.toLong() * bmp.height
+                    val byteCount = bmp.byteCount
+
+                    if (actualPixels > maxPixels || byteCount > 100 * 1024 * 1024) {
+                        val scale = Math.sqrt(maxPixels.toDouble() / actualPixels).toFloat().coerceAtMost(1f)
+                        val nw = (bmp.width * scale).toInt().coerceAtLeast(1)
+                        val nh = (bmp.height * scale).toInt().coerceAtLeast(1)
+                        val scaled = Bitmap.createScaledBitmap(bmp, nw, nh, true)
+                        wallpaperView.setImageBitmap(scaled)
+                    } else {
+                        wallpaperView.setImageBitmap(bmp)
+                    }
+                } else {
+                    wallpaperView.setImageDrawable(drw)
+                }
+            } else {
+                wallpaperView.setImageDrawable(drw)
+            }
+            onWallpaperBitmapReady()
+        }
+    }
+
+    private fun calculateInSampleSize(options: android.graphics.BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
+        val (height: Int, width: Int) = options.outHeight to options.outWidth
+        var inSampleSize = 1
+        if (height > reqHeight || width > reqWidth) {
+            val halfHeight: Int = height / 2
+            val halfWidth: Int = width / 2
+            while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+                inSampleSize *= 2
+            }
+        }
+        return inSampleSize
     }
     private fun onWallpaperBitmapReady() { if (Prefs.string(this, Prefs.KEY_BACKGROUND_MODE, "normal") == "tiles_only") applyBackgroundMode("tiles_only") }
     private var lastUserActivityMs = android.os.SystemClock.elapsedRealtime()
@@ -717,6 +845,9 @@ class MainActivity : AppCompatActivity(), NotificationListener.Listener {
         if (drawerFrag?.isJumpListOpen() == true) { drawerFrag.closeJumpList(); return }
         if (editMode) { exitEditMode(); return }
         if (::pager.isInitialized && pager.currentItem != LauncherPagerAdapter.PAGE_START) { pager.currentItem = LauncherPagerAdapter.PAGE_START; return }
+        
+        @Suppress("DEPRECATION")
+        super.onBackPressed()
     }
     private fun launchVoiceSearch() = runCatching { startActivity(Intent(android.speech.RecognizerIntent.ACTION_WEB_SEARCH).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.onFailure { launchGoogleSearch() }
     private fun launchGoogleLens() {

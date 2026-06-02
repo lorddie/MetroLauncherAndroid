@@ -18,15 +18,18 @@ import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
+import androidx.core.graphics.drawable.toDrawable
+import androidx.core.graphics.withClip
+import androidx.core.graphics.withTranslation
 import com.metrolauncher.R
 import com.metrolauncher.model.Tile
 import com.metrolauncher.model.TileSize
-import com.metrolauncher.util.ColorUtils
 import com.metrolauncher.util.MediaInfoCache
 import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
+import kotlin.math.sqrt
 
 /**
  * Single tile view.
@@ -241,7 +244,7 @@ class TileView @JvmOverloads constructor(
     }
 
     fun setWebIcon(bmp: Bitmap?) {
-        this.icon = bmp?.let { android.graphics.drawable.BitmapDrawable(resources, it) }
+        this.icon = bmp?.toDrawable(resources)
         invalidate()
     }
 
@@ -475,7 +478,7 @@ class TileView @JvmOverloads constructor(
     private var monoBitmapColor: Int = Color.WHITE
 
     private fun getOrBuildMonoBitmap(drw: Drawable, size: Int): Bitmap? {
-        val targetSize = size.coerceAtLeast(1)
+        val targetSize = size.coerceAtLeast(1).coerceAtMost(2048)
         val id = System.identityHashCode(drw)
         if (monoBitmap != null && monoBitmapSourceId == id && monoBitmapSize == targetSize && monoBitmapColor == textColor) return monoBitmap
 
@@ -545,16 +548,16 @@ class TileView @JvmOverloads constructor(
             return bmp
         }
 
-        val bgLum = (0.2126f * (rSum / opaqueCount) + 0.7152f * (gSum / opaqueCount) + 0.0722f * (bSum / opaqueCount)).toInt()
+        val backgroundLum = (0.2126f * (rSum / opaqueCount) + 0.7152f * (gSum / opaqueCount) + 0.0722f * (bSum / opaqueCount)).toInt()
         val diffs = IntArray(pixels.size); var maxDiff = 0
         for (i in pixels.indices) {
             val a = (pixels[i] ushr 24) and 0xFF
             if (a < 20) { diffs[i] = -1; continue }
             val lum = (0.2126f * ((pixels[i] ushr 16) and 0xFF) + 0.7152f * ((pixels[i] ushr 8) and 0xFF) + 0.0722f * (pixels[i] and 0xFF)).toInt()
             val px = i % targetSize; val py = i / targetSize
-            val dist = Math.sqrt(((px - targetSize/2f) * (px - targetSize/2f) + (py - targetSize/2f) * (py - targetSize/2f)).toDouble()).toFloat()
+            val dist = sqrt(((px - targetSize/2f) * (px - targetSize/2f) + (py - targetSize/2f) * (py - targetSize/2f)).toDouble()).toFloat()
             val weight = (1.0f - (dist / (targetSize * 0.5f)).coerceIn(0f, 1f)).let { it * it }
-            val diff = (Math.abs(lum - bgLum) * (0.5f + weight)).toInt()
+            val diff = (Math.abs(lum - backgroundLum) * (0.5f + weight)).toInt()
             diffs[i] = diff; if (diff > maxDiff) maxDiff = diff
         }
 
@@ -794,8 +797,8 @@ class TileView @JvmOverloads constructor(
         prevBadgeBounds.setEmpty()
         nextBadgeBounds.setEmpty()
         when (t.size) {
-            TileSize.SMALL -> drawSmallTile(canvas, t, w, h)
-            TileSize.MEDIUM -> drawMediumTile(canvas, t, w, h, false, t.liveCount > 0)
+            TileSize.SMALL -> drawSmallTile(canvas, w, h)
+            TileSize.MEDIUM -> drawMediumTile(canvas, t, w, h, t.liveCount > 0)
             TileSize.WIDE -> drawWideTile(canvas, t, w, h, false, t.liveCount > 0)
             TileSize.LARGE -> drawLargeTile(canvas, t, w, h, false, t.liveCount > 0)
         }
@@ -811,7 +814,7 @@ class TileView @JvmOverloads constructor(
         } else canvas.drawRect(bgRect, bgPaint)
     }
 
-    private fun drawSmallTile(canvas: Canvas, t: Tile, w: Float, h: Float) {
+    private fun drawSmallTile(canvas: Canvas, w: Float, h: Float) {
         val iconSize = min(w, h) * 0.55f
         val iconTop = (h - iconSize) / 2f
         val centeredLeft = (w - iconSize) / 2f
@@ -824,10 +827,9 @@ class TileView @JvmOverloads constructor(
             val startX = if (prevIconLeft < 0) centeredLeft else prevIconLeft
             val animatedIconLeft = startX + (targetIconLeft - startX) * countProgress
             val badgeLeft = animatedIconLeft - gap - badgeSize
-            canvas.save()
-            canvas.clipRect(0f, 0f, animatedIconLeft, h)
-            drawCountBadgeInline(canvas, badgeLeft, (h - badgeSize) / 2f, badgeSize, countToValue)
-            canvas.restore()
+            canvas.withClip(0f, 0f, animatedIconLeft, h) {
+                drawCountBadgeInline(canvas, badgeLeft, (h - badgeSize) / 2f, badgeSize, countToValue)
+            }
             drawIcon(canvas, animatedIconLeft, iconTop, iconSize)
         } else { 
             currentIconLeft = centeredLeft
@@ -835,7 +837,7 @@ class TileView @JvmOverloads constructor(
         }
     }
 
-    private fun drawMediumTile(canvas: Canvas, t: Tile, w: Float, h: Float, @Suppress("UNUSED_PARAMETER") hasLiveContent: Boolean, @Suppress("UNUSED_PARAMETER") hasCount: Boolean) {
+    private fun drawMediumTile(canvas: Canvas, t: Tile, w: Float, h: Float, hasCount: Boolean) {
         val preview = currentPreviewText(t)
         val showPreview = !preview.isNullOrBlank() && liveContentMode == LiveContentMode.PREVIEW
 
@@ -843,26 +845,24 @@ class TileView @JvmOverloads constructor(
         // slideProgress goes from 0 to 1. 0 = old out (top), 1 = new in.
         if (slideProgress < 1f) {
             // During animation we draw both (one enters, one leaves)
-            canvas.save()
-            // Leaving one (if switching from ICON to PREVIEW, ICON leaves)
-            val exitMode = if (liveContentMode == LiveContentMode.PREVIEW) LiveContentMode.ICON else LiveContentMode.PREVIEW
-            canvas.translate(0f, -slideProgress * h)
-            if (exitMode == LiveContentMode.ICON) drawMediumIconState(canvas, t, w, h) else drawMediumPreviewState(canvas, preview!!, w, h)
-            canvas.restore()
+            canvas.withTranslation(y = -slideProgress * h) {
+                // Quello che esce (se stavamo passando da ICON a PREVIEW, esce ICON)
+                val exitMode = if (liveContentMode == LiveContentMode.PREVIEW) LiveContentMode.ICON else LiveContentMode.PREVIEW
+                if (exitMode == LiveContentMode.ICON) drawMediumIconState(this, t, w, h, hasCount) else drawMediumPreviewState(this, preview!!, w, h)
+            }
 
-            canvas.save()
-            // Entering one
-            canvas.translate(0f, h - slideProgress * h)
-            if (liveContentMode == LiveContentMode.PREVIEW) drawMediumPreviewState(canvas, preview!!, w, h) else drawMediumIconState(canvas, t, w, h)
-            canvas.restore()
+            canvas.withTranslation(y = h - slideProgress * h) {
+                // Quello che entra
+                if (liveContentMode == LiveContentMode.PREVIEW) drawMediumPreviewState(this, preview!!, w, h) else drawMediumIconState(this, t, w, h, hasCount)
+            }
         } else {
             // Stable state
             if (showPreview) drawMediumPreviewState(canvas, preview!!, w, h)
-            else drawMediumIconState(canvas, t, w, h)
+            else drawMediumIconState(canvas, t, w, h, hasCount)
         }
     }
 
-    private fun drawMediumIconState(canvas: Canvas, t: Tile, w: Float, h: Float) {
+    private fun drawMediumIconState(canvas: Canvas, t: Tile, w: Float, h: Float, hasCount: Boolean) {
         val iconSize = min(w, h) * 0.40f; val iconTop = (h - iconSize) / 2f; val centeredLeft = (w - iconSize) / 2f
         if ((countToValue > 0 || countProgress < 1f) && (countFromValue > 0 || countToValue > 0)) {
             val badgeSize = h * 0.28f; val gap = 4f; val minMargin = 6f
@@ -995,14 +995,6 @@ class TileView @JvmOverloads constructor(
     }
 
     private fun currentPreviewText(t: Tile): String? = if (t.liveMessages.isNotEmpty()) t.liveMessages[t.liveMessageIndex.coerceIn(0, t.liveMessages.size - 1)] else t.liveBody?.takeIf { it.isNotBlank() } ?: t.liveTitle?.takeIf { it.isNotBlank() }
-
-    private fun drawSlidingText(canvas: Canvas, text: String, paint: Paint, x: Float, y: Float, maxWidth: Float) {
-        val trimmed = ellipsize(text, paint, maxWidth)
-        if (slideProgress >= 1f) { canvas.drawText(trimmed, x, y, paint); return }
-        val savedAlpha = paint.alpha; val offset = (1f - slideProgress) * paint.textSize * 1.5f
-        paint.alpha = (savedAlpha * slideProgress).toInt().coerceIn(0, 255)
-        canvas.drawText(trimmed, x, y - offset, paint); paint.alpha = savedAlpha
-    }
 
     private fun drawOdometerWrappedText(canvas: Canvas, t: Tile, paint: Paint, x: Float, y: Float, maxWidth: Float, maxLines: Int) {
         val messages = t.liveMessages
