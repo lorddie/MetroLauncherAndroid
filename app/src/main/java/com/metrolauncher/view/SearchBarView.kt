@@ -13,6 +13,7 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.animation.DecelerateInterpolator
+import com.metrolauncher.R
 
 /**
  * Single HORIZONTAL TILE search bar (Option A), in Metro style.
@@ -151,7 +152,7 @@ class SearchBarView @JvmOverloads constructor(
         hintPaint.color = withAlpha(white, (255 * tP * 0.85f).toInt())
         canvas.save()
         canvas.translate(0f, -slideDist * (1f - tP))
-        canvas.drawText("Search", textX, baseline, hintPaint)
+        canvas.drawText(context.getString(R.string.search_hint), textX, baseline, hintPaint)
         canvas.restore()
 
         // 3c) Lens

@@ -155,6 +155,13 @@ class DrawerFragment : Fragment() {
         if (isJumpListOpen()) jumpListOverlay.visibility = View.GONE
     }
 
+    /** Clears the search input and restores the full app list. */
+    fun resetSearch() {
+        if (::searchInput.isInitialized) {
+            searchInput.setText("")
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         val context = requireContext()

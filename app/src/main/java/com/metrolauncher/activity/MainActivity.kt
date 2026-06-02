@@ -194,7 +194,14 @@ class MainActivity : AppCompatActivity(), NotificationListener.Listener {
         wallpaperView = findViewById(R.id.wallpaper_view); pager = findViewById(R.id.pager)
         pager.adapter = LauncherPagerAdapter(this); pager.offscreenPageLimit = 1
         pager.registerOnPageChangeCallback(object : androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
-            override fun onPageSelected(position: Int) { if (position == LauncherPagerAdapter.PAGE_DRAWER && editMode) exitEditMode() }
+            override fun onPageSelected(position: Int) { 
+                if (position == LauncherPagerAdapter.PAGE_DRAWER && editMode) exitEditMode()
+                if (position == LauncherPagerAdapter.PAGE_START) {
+                    // Reset search when returning to Start screen
+                    supportFragmentManager.fragments.filterIsInstance<DrawerFragment>()
+                        .forEach { it.resetSearch() }
+                }
+            }
         })
         setupWallpaper(); loadTileDataOnly(); maybePromptNotificationAccess()
     }
@@ -303,17 +310,17 @@ class MainActivity : AppCompatActivity(), NotificationListener.Listener {
         } else {
             // New folder: ask for the name BEFORE confirming the merge
             val input = android.widget.EditText(this).apply {
-                hint = "Folder name"
-                setText("Folder")
+                hint = getString(R.string.folder_name_hint)
+                setText(getString(R.string.default_folder_name))
                 setSelection(0, text.length)
                 setPadding(48, 32, 48, 32)
             }
             AlertDialog.Builder(this, R.style.Theme_MetroLauncher_Dialog)
-                .setTitle("Create folder")
-                .setMessage("The two apps will be merged into a folder. Choose a name:")
+                .setTitle(R.string.create_folder_title)
+                .setMessage(R.string.create_folder_msg)
                 .setView(input)
-                .setPositiveButton("Create") { _, _ ->
-                    val name = input.text.toString().ifBlank { "Folder" }
+                .setPositiveButton(R.string.create_button) { _, _ ->
+                    val name = input.text.toString().ifBlank { getString(R.string.default_folder_name) }
                     val newFolder = Tile(
                         id = UUID.randomUUID().toString(),
                         kind = com.metrolauncher.model.TileKind.FOLDER,
@@ -327,7 +334,7 @@ class MainActivity : AppCompatActivity(), NotificationListener.Listener {
                     tiles.removeAll { it.id == dragged.id }
                     relayoutAll()
                 }
-                .setNegativeButton("Cancel", null)
+                .setNegativeButton(R.string.cancel_button, null)
                 .setOnCancelListener {
                     // Drag canceled: redo layout so the dragged tile returns to its place
                     relayoutAll()
@@ -507,12 +514,12 @@ class MainActivity : AppCompatActivity(), NotificationListener.Listener {
             setPadding((20 * dp).toInt(), (12 * dp).toInt(), (20 * dp).toInt(), (8 * dp).toInt())
         }
         val editLabel = android.widget.EditText(this).apply {
-            hint = "Nome"
+            hint = getString(R.string.name_hint)
             setHintTextColor(0x66FFFFFF.toInt()); setTextColor(0xFFFFFFFF.toInt()); background = null
             textSize = 18f
         }
         val editUrl = android.widget.EditText(this).apply {
-            hint = "URL (https://...)"
+            hint = getString(R.string.url_hint)
             setHintTextColor(0x66FFFFFF.toInt()); setTextColor(0xFFFFFFFF.toInt()); background = null
             textSize = 16f
             inputType = android.text.InputType.TYPE_TEXT_VARIATION_URI or android.text.InputType.TYPE_CLASS_TEXT
@@ -520,8 +527,8 @@ class MainActivity : AppCompatActivity(), NotificationListener.Listener {
         layout.addView(editUrl); layout.addView(editLabel)
 
         AlertDialog.Builder(this, R.style.Theme_MetroLauncher_Dialog)
-            .setTitle("Aggiungi link web").setView(layout)
-            .setPositiveButton("Aggiungi") { _, _ ->
+            .setTitle(R.string.add_web_link_title).setView(layout)
+            .setPositiveButton(R.string.add_button) { _, _ ->
                 val url = editUrl.text.toString().trim()
                 if (url.isNotBlank()) addWebLink(
                     label = editLabel.text.toString().trim(),
@@ -590,14 +597,14 @@ class MainActivity : AppCompatActivity(), NotificationListener.Listener {
             entries += Entry(getString(R.string.resize_large)) { resizeTile(tile, TileSize.LARGE) }
         }
         if (tile.kind == com.metrolauncher.model.TileKind.WEATHER) {
-            entries += Entry("Update weather") { scope.launch { val snap = com.metrolauncher.util.WeatherProvider.fetchNow(this@MainActivity, tile.weatherLocationOverride); if (snap != null) tileGrid.setWeatherSnapshot(tile.id, snap) } }
+            entries += Entry(getString(R.string.update_weather)) { scope.launch { val snap = com.metrolauncher.util.WeatherProvider.fetchNow(this@MainActivity, tile.weatherLocationOverride); if (snap != null) tileGrid.setWeatherSnapshot(tile.id, snap) } }
         }
         if (tile.kind == com.metrolauncher.model.TileKind.FOLDER) {
-            entries += Entry("Rename folder") { promptRenameFolder(tile) }
+            entries += Entry(getString(R.string.rename_folder_title)) { promptRenameFolder(tile) }
         }
-        val privLabel = if (tile.notificationsDisabled) "Enable notifications" else "Disable notifications"
+        val privLabel = if (tile.notificationsDisabled) getString(R.string.enable_notifications) else getString(R.string.disable_notifications)
         entries += Entry(privLabel) { tile.notificationsDisabled = !tile.notificationsDisabled; if (tile.notificationsDisabled) { tile.liveCount = 0; tileGrid.updateLiveContent(tile.id, null, null, 0) } else NotificationListener.requestRebind(); storage.save(tiles) }
-        val mediaLabel = if (tile.mediaDisabled) "Enable Mini-Player" else "Disable Mini-Player"
+        val mediaLabel = if (tile.mediaDisabled) getString(R.string.enable_mini_player) else getString(R.string.disable_mini_player)
         entries += Entry(mediaLabel) { tile.mediaDisabled = !tile.mediaDisabled; if (tile.mediaDisabled) tileGrid.updateMediaForPackage(tile.packageName, null) else MediaInfoCache.get(tile.packageName)?.let { tileGrid.updateMediaForPackage(tile.packageName, it) }; storage.save(tiles) }
         entries += Entry(getString(R.string.unpin)) { unpinTile(tile) }
         entries += Entry(getString(R.string.open_launcher_settings)) { startActivity(Intent(this, SettingsActivity::class.java)) }
@@ -611,12 +618,12 @@ class MainActivity : AppCompatActivity(), NotificationListener.Listener {
             setPadding(48, 32, 48, 32)
         }
         AlertDialog.Builder(this, R.style.Theme_MetroLauncher_Dialog)
-            .setTitle("Rename folder").setView(input)
-            .setPositiveButton("OK") { _, _ ->
-                folder.customLabel = input.text.toString().ifBlank { "Folder" }
+            .setTitle(R.string.rename_folder_title).setView(input)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                folder.customLabel = input.text.toString().ifBlank { getString(R.string.default_folder_name) }
                 tileGrid.setTiles(tiles) { iconFor(it) }; storage.save(tiles)
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(R.string.cancel_button, null)
             .show()
     }
 

@@ -104,11 +104,11 @@ class SettingsActivity : AppCompatActivity() {
                 val current = Prefs.int(requireContext(), Prefs.KEY_GRID_COLUMNS,
                                         Prefs.DEFAULT_GRID_COLUMNS)
                 list.value = current.toString()
-                list.summary = "$current columns"
+                list.summary = getString(R.string.grid_columns_format, current)
                 list.setOnPreferenceChangeListener { _, newVal ->
                     val i = (newVal as? String)?.toIntOrNull() ?: Prefs.DEFAULT_GRID_COLUMNS
                     Prefs.setInt(requireContext(), Prefs.KEY_GRID_COLUMNS, i)
-                    list.summary = "$i columns"
+                    list.summary = getString(R.string.grid_columns_format, i)
                     true
                 }
             }
@@ -170,7 +170,14 @@ class SettingsActivity : AppCompatActivity() {
             // --- Refresh notifications
             findPreference<Preference>("notification_refresh")?.setOnPreferenceClickListener {
                 NotificationListener.requestRebind()
-                android.widget.Toast.makeText(requireContext(), "Requesting notification synchronization...", android.widget.Toast.LENGTH_SHORT).show()
+                android.widget.Toast.makeText(requireContext(), getString(R.string.notification_sync_toast), android.widget.Toast.LENGTH_SHORT).show()
+                true
+            }
+
+            // --- Donation
+            findPreference<Preference>("donation")?.setOnPreferenceClickListener {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/lorddie"))
+                startActivity(intent)
                 true
             }
 

@@ -109,6 +109,11 @@
     <PreferenceCategory android:title="@string/settings_cat_advanced">
 
         <Preference
+            android:key="donation"
+            android:title="@string/donation_title"
+            android:summary="@string/donation_summary" />
+
+        <Preference
             android:key="reset_tiles"
             android:title="@string/reset_tiles_title"
             android:summary="@string/reset_tiles_summary" />

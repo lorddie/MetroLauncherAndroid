@@ -3,101 +3,151 @@
     <string name="app_name">Metro Launcher</string>
 
     <!-- Drawer -->
-    <string name="search_hint">cerca</string>
-    <string name="no_apps">Nessuna app trovata</string>
-    <string name="open_all_apps">Apri tutte le app</string>
-    <string name="share_add_to_start">Aggiungi a Start</string>
+    <string name="search_hint">search</string>
+    <string name="no_apps">No apps found</string>
+    <string name="open_all_apps">Open all apps</string>
+    <string name="share_add_to_start">Add to Start</string>
 
     <!-- Tile menu -->
-    <string name="resize_small">Ridimensiona: piccola</string>
-    <string name="resize_medium">Ridimensiona: media</string>
-    <string name="resize_wide">Ridimensiona: larga</string>
-    <string name="resize_large">Ridimensiona: grande</string>
-    <string name="pick_color">Cambia colore</string>
-    <string name="toggle_transparent">Sfondo trasparente</string>
-    <string name="unpin">Rimuovi dalla Start</string>
+    <string name="resize_small">Resize: small</string>
+    <string name="resize_medium">Resize: medium</string>
+    <string name="resize_wide">Resize: wide</string>
+    <string name="resize_large">Resize: large</string>
+    <string name="pick_color">Change color</string>
+    <string name="toggle_transparent">Transparent background</string>
+    <string name="unpin">Unpin from Start</string>
 
     <!-- App drawer menu -->
-    <string name="pin_to_start">Aggiungi alla Start</string>
-    <string name="app_info">Info app</string>
-    <string name="uninstall">Disinstalla</string>
+    <string name="pin_to_start">Add to Start</string>
+    <string name="app_info">App info</string>
+    <string name="uninstall">Uninstall</string>
 
     <!-- Settings -->
-    <string name="settings">Impostazioni</string>
-    <string name="settings_cat_appearance">Aspetto</string>
-    <string name="settings_cat_behavior">Comportamento</string>
-    <string name="settings_cat_advanced">Avanzate</string>
+    <string name="settings">Settings</string>
+    <string name="settings_cat_appearance">Appearance</string>
+    <string name="settings_cat_behavior">Behavior</string>
+    <string name="settings_cat_advanced">Advanced</string>
 
-    <string name="pick_wallpaper_title">Cambia sfondo</string>
-    <string name="reset_wallpaper_title">Usa sfondo di sistema</string>
-    <string name="reset_wallpaper_summary">Ripristina l\'immagine di sfondo predefinita del telefono</string>
-    <string name="wallpaper_custom_set">Sfondo personalizzato impostato</string>
-    <string name="wallpaper_using_system">Sto usando lo sfondo di sistema</string>
+    <string name="pick_wallpaper_title">Change wallpaper</string>
+    <string name="reset_wallpaper_title">Use system wallpaper</string>
+    <string name="reset_wallpaper_summary">Restore the default phone wallpaper image</string>
+    <string name="wallpaper_custom_set">Custom wallpaper set</string>
+    <string name="wallpaper_using_system">I\'m using the system wallpaper</string>
 
-    <string name="grid_columns_title">Colonne della griglia</string>
-    <string name="grid_columns_summary">Scegli fra 4 colonne (Windows Phone classico) o 6 (modalità compatta)</string>
+    <string name="grid_columns_title">Grid columns</string>
+    <string name="grid_columns_summary">Choose between 4 columns (classic Windows Phone) or 6 (compact mode)</string>
+    <string name="grid_columns_format">%1$d columns</string>
 
-    <string name="tile_opacity_title">Trasparenza tile</string>
-    <string name="tile_opacity_summary">100 = opaco, 0 = completamente trasparente (mostra solo lo sfondo)</string>
+    <string name="tile_opacity_title">Tile transparency</string>
+    <string name="tile_opacity_summary">100 = opaque, 0 = completely transparent (shows only wallpaper)</string>
 
-    <string name="use_global_color_title">Colore unico per tutte le tile</string>
-    <string name="use_global_color_summary">Applica un singolo colore Metro a tutte le tile invece dei colori individuali</string>
+    <string name="use_global_color_title">Single color for all tiles</string>
+    <string name="use_global_color_summary">Apply a single Metro color to all tiles instead of individual colors</string>
 
-    <string name="global_color_title">Colore unico</string>
-    <string name="global_color_summary">Tinta da usare quando \"Colore unico\" è attivo</string>
+    <string name="global_color_title">Single color</string>
+    <string name="global_color_summary">Tint to use when \"Single color\" is active</string>
 
     <!-- Custom color picker dialog -->
-    <string name="custom_color_title">Colore personalizzato</string>
-    <string name="custom_color_red">Rosso</string>
-    <string name="custom_color_green">Verde</string>
-    <string name="custom_color_blue">Blu</string>
+    <string name="custom_color_title">Custom color</string>
+    <string name="custom_color_red">Red</string>
+    <string name="custom_color_green">Green</string>
+    <string name="custom_color_blue">Blue</string>
 
-    <string name="monochrome_icons_title">Icone monocromatiche</string>
-    <string name="monochrome_icons_summary">Icone rese come sagoma bianca, stile Windows Phone</string>
+    <string name="monochrome_icons_title">Monochrome icons</string>
+    <string name="monochrome_icons_summary">Icons rendered as a white silhouette, Windows Phone style</string>
 
-    <string name="text_color_mode_title">Colore del testo</string>
-    <string name="text_color_mode_summary">Applicato a tutte le tile: label, badge notifiche, calendario</string>
+    <string name="text_color_mode_title">Text color</string>
+    <string name="text_color_mode_summary">Applied to all tiles: label, notification badge, calendar</string>
 
-    <string name="background_mode_title">Modalità sfondo</string>
-    <string name="background_mode_summary">Scegli come mostrare il wallpaper rispetto alle tile</string>
+    <string name="background_mode_title">Background mode</string>
+    <string name="background_mode_summary">Choose how to show the wallpaper relative to tiles</string>
 
-    <string name="tile_font_scale_title">Dimensione caratteri tile</string>
-    <string name="tile_font_scale_summary">Grandezza del testo su etichette e anteprime</string>
-    <string name="drawer_font_scale_title">Dimensione caratteri lista app</string>
-    <string name="drawer_font_scale_summary">Grandezza dei nomi app nel drawer</string>
+    <string name="tile_font_scale_title">Tile font size</string>
+    <string name="tile_font_scale_summary">Text size for labels and previews</string>
+    <string name="drawer_font_scale_title">App list font size</string>
+    <string name="drawer_font_scale_summary">Text size for app names in the drawer</string>
 
-    <string name="lock_rotation_title">Blocca rotazione</string>
-    <string name="lock_rotation_summary">Mantieni la Start sempre in verticale</string>
+    <string name="lock_rotation_title">Lock rotation</string>
+    <string name="lock_rotation_summary">Keep Start screen always in vertical portrait</string>
 
-    <string name="change_wallpaper_title">Cambia sfondo</string>
-    <string name="change_wallpaper_summary">Scegli un\'immagine o uno sfondo animato</string>
-    <string name="reset_tiles_title">Ripristina Start</string>
-    <string name="reset_tiles_summary">Cancella tutte le tile e ricomincia</string>
-    <string name="reset_tiles_confirm">Sei sicuro di voler rimuovere tutte le tile dalla Start?</string>
-    <string name="notification_access_title">Accesso alle notifiche</string>
-    <string name="notification_access_summary">Necessario per live tile, messaggistica e media</string>
-    <string name="tile_animation_title">Animazioni tile</string>
-    <string name="tile_animation_summary">Effetti alla pressione delle tile</string>
+    <string name="change_wallpaper_title">Change wallpaper</string>
+    <string name="change_wallpaper_summary">Choose an image or a live wallpaper</string>
+    <string name="reset_tiles_title">Reset Start</string>
+    <string name="reset_tiles_summary">Clear all tiles and start over</string>
+    <string name="reset_tiles_confirm">Are you sure you want to remove all tiles from Start?</string>
+    <string name="notification_access_title">Notification access</string>
+    <string name="notification_access_summary">Required for live tiles, messaging and media</string>
+    <string name="notification_refresh">Reload notifications</string>
+    <string name="notification_refresh_summary">Manually sync tile notifications if they seem stuck</string>
+    <string name="notification_sync_toast">Requesting notification synchronization...</string>
 
-    <string name="open_launcher_settings">Impostazioni launcher</string>
+    <string name="tile_animation_title">Tile animations</string>
+    <string name="tile_animation_summary">Effects when tiles are pressed</string>
+
+    <string name="open_launcher_settings">Launcher settings</string>
 
     <!-- Promozione tile -->
-    <string name="promote_to_calendar">Usa come live tile calendario</string>
-    <string name="promote_to_clock">Usa come live tile orologio</string>
-    <string name="promote_to_weather">Usa come live tile meteo</string>
-    <string name="promote_to_gallery">Usa come slideshow foto</string>
-    <string name="location_perm_denied">Permesso di localizzazione negato — il tile meteo mostrerà \"—°\" finché non lo concedi dalle impostazioni di sistema</string>
-    <string name="change_gallery_folder">Cambia cartella foto…</string>
-    <string name="demote_to_app">Torna a tile app standard</string>
-    <string name="calendar_perm_denied">Permesso calendario negato. Concedilo dalle Impostazioni per usare il live tile.</string>
+    <string name="promote_to_calendar">Use as calendar live tile</string>
+    <string name="promote_to_clock">Use as clock live tile</string>
+    <string name="promote_to_weather">Use as weather live tile</string>
+    <string name="promote_to_gallery">Use as photo slideshow</string>
+    <string name="location_perm_denied">Location permission denied — the weather tile will show \"—°\" until you grant it from system settings</string>
+    <string name="change_gallery_folder">Change photo folder…</string>
+    <string name="demote_to_app">Back to standard app tile</string>
+    <string name="calendar_perm_denied">Calendar permission denied. Grant it in Settings to use the live tile.</string>
 
     <!-- Notification access prompt -->
-    <string name="enable_notifications_title">Abilita live tile</string>
-    <string name="enable_notifications_msg">Per mostrare l\'anteprima delle notifiche sulle tile serve il permesso
-        di accesso alle notifiche. Puoi attivarlo ora oppure più tardi dalle Impostazioni.</string>
-    <string name="open_settings">Apri impostazioni</string>
-    <string name="later">Più tardi</string>
+    <string name="enable_notifications_title">Enable live tiles</string>
+    <string name="enable_notifications_msg">To show notification previews on tiles, notification access permission is required. You can enable it now or later from Settings.</string>
+    <string name="open_settings">Open settings</string>
+    <string name="later">Later</string>
+
+    <!-- Donation -->
+    <string name="donation_title">Support development</string>
+    <string name="donation_summary">If you like the app and want to contribute to the improvement of the launcher, here is the link to do it freely: https://ko-fi.com/lorddie</string>
+
+    <!-- Folder Creation -->
+    <string name="folder_name_hint">Folder name</string>
+    <string name="default_folder_name">Folder</string>
+    <string name="create_folder_title">Create folder</string>
+    <string name="create_folder_msg">The two apps will be merged into a folder. Choose a name:</string>
+    <string name="create_button">Create</string>
+    <string name="cancel_button">Cancel</string>
+    <string name="rename_folder_title">Rename folder</string>
+
+    <!-- Tile Menu Extras -->
+    <string name="update_weather">Update weather</string>
+    <string name="enable_notifications">Enable notifications</string>
+    <string name="disable_notifications">Disable notifications</string>
+    <string name="enable_mini_player">Enable Mini-Player</string>
+    <string name="disable_mini_player">Disable Mini-Player</string>
+
+    <!-- Web Link Dialog -->
+    <string name="add_web_link_title">Add web link</string>
+    <string name="add_button">Add</string>
+    <string name="name_hint">Name</string>
+    <string name="url_hint">URL (https://...)</string>
+
+    <!-- Weather labels -->
+    <string name="weather_clear_night">Clear</string>
+    <string name="weather_clear_day">Sunny</string>
+    <string name="weather_partly_cloudy">Partly Cloudy</string>
+    <string name="weather_cloudy">Cloudy</string>
+    <string name="weather_rain">Rain</string>
+    <string name="weather_snow">Snow</string>
+    <string name="weather_thunderstorm">Storm</string>
+    <string name="weather_fog">Fog</string>
+    <string name="weather_at_time">%1$s at %2$s</string>
+
+    <!-- Calendar labels -->
+    <string name="calendar_no_events">No appointments today</string>
+    <string name="calendar_grant_access">Grant calendar access</string>
+    <string name="calendar_all_day">All day</string>
+
+    <!-- Clock labels -->
+    <string name="clock_next_alarm">Next alarm</string>
+    <string name="clock_no_alarms">No alarms</string>
 
     <!-- Accessibility -->
-    <string name="wallpaper_desc">Sfondo</string>
+    <string name="wallpaper_desc">Wallpaper</string>
 </resources>

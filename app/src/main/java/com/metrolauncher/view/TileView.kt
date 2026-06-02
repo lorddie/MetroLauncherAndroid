@@ -18,6 +18,7 @@ import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
+import com.metrolauncher.R
 import com.metrolauncher.model.Tile
 import com.metrolauncher.model.TileSize
 import com.metrolauncher.util.ColorUtils
@@ -1104,7 +1105,7 @@ class TileView @JvmOverloads constructor(
             TileSize.MEDIUM -> drawCalendarBlock(canvas, dowFull, dayNum, w / 2f, h / 2f, w * 0.18f, w * 0.55f, color)
             else -> { val padX = 22f; drawCalendarBlock(canvas, dowAbbrev, dayNum, w * 0.80f, h * 0.42f, h * 0.14f, h * 0.55f, color)
                 var evY = padX + 26f; val evMaxW = w * 0.58f; val evTitlePaint = textPaint(color, 30f, Paint.Align.LEFT); val evTimePaint = textPaint((color and 0x00FFFFFF) or (0xDD shl 24), 22f, Paint.Align.LEFT, true)
-                if (calendarEvents.isEmpty()) canvas.drawText(ellipsize(if (com.metrolauncher.util.CalendarProvider.hasPermission(context)) "No appointments today" else "Grant calendar access", evTimePaint, evMaxW), padX, evY, evTimePaint)
+                if (calendarEvents.isEmpty()) canvas.drawText(ellipsize(if (com.metrolauncher.util.CalendarProvider.hasPermission(context)) context.getString(R.string.calendar_no_events) else context.getString(R.string.calendar_grant_access), evTimePaint, evMaxW), padX, evY, evTimePaint)
                 else for (ev in calendarEvents.take(if (t.size == TileSize.LARGE) 4 else 2)) { canvas.drawText(ellipsize(ev.title, evTitlePaint, evMaxW), padX, evY, evTitlePaint); evY += evTitlePaint.textSize * 1.05f; canvas.drawText(ellipsize(formatEventTime(ev), evTimePaint, evMaxW), padX, evY, evTimePaint); evY += evTimePaint.textSize * 1.6f; if (evY > h - padX - 28f) break }
                 if (t.showLabel) t.customLabel?.takeIf { it.isNotBlank() }?.let { canvas.drawText(it, padX, h - 18f, labelPaint) }
             }
@@ -1131,7 +1132,7 @@ class TileView @JvmOverloads constructor(
         canvas.drawText(dayNum.toString(), cx, dowBaseline + gap + dayNumSize * 0.85f, dayPaint)
     }
 
-    private fun formatEventTime(ev: com.metrolauncher.util.CalendarProvider.Event): String = if (ev.allDay) "All day" else { val fmt = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()); "${fmt.format(java.util.Date(ev.startMs))} – ${fmt.format(java.util.Date(ev.endMs))}" }
+    private fun formatEventTime(ev: com.metrolauncher.util.CalendarProvider.Event): String = if (ev.allDay) context.getString(R.string.calendar_all_day) else { val fmt = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()); "${fmt.format(java.util.Date(ev.startMs))} – ${fmt.format(java.util.Date(ev.endMs))}" }
 
     private fun drawClockMode(canvas: Canvas, t: Tile, w: Float, h: Float) {
         canvas.drawRect(bgRect, bgPaint)
@@ -1147,8 +1148,8 @@ class TileView @JvmOverloads constructor(
                 val timeSize = if (probePaint.measureText(timeText) <= rightW * 0.90f) targetSize else targetSize * (rightW * 0.90f / probePaint.measureText(timeText))
                 drawClockBlock(canvas, null, timeText, rightX + rightW / 2f, h * 0.50f, 0f, timeSize, color, false)
                 val titlePaint = textPaint(color, 28f, Paint.Align.LEFT); val subPaint = textPaint((color and 0x00FFFFFF) or (0xDD shl 24), 22f, Paint.Align.LEFT, true)
-                if (alarmText != null) { drawAlarmBellIcon(canvas, padX, h * 0.30f - titlePaint.textSize * 0.85f, titlePaint.textSize, color); canvas.drawText(ellipsize(alarmText, titlePaint, leftW - titlePaint.textSize - 8f), padX + titlePaint.textSize + 8f, h * 0.30f, titlePaint); canvas.drawText(ellipsize("Next alarm", subPaint, leftW), padX, h * 0.30f + titlePaint.textSize * 1.3f, subPaint) }
-                else canvas.drawText(ellipsize("No alarms", subPaint, leftW), padX, h * 0.30f, subPaint)
+                if (alarmText != null) { drawAlarmBellIcon(canvas, padX, h * 0.30f - titlePaint.textSize * 0.85f, titlePaint.textSize, color); canvas.drawText(ellipsize(alarmText, titlePaint, leftW - titlePaint.textSize - 8f), padX + titlePaint.textSize + 8f, h * 0.30f, titlePaint); canvas.drawText(ellipsize(context.getString(R.string.clock_next_alarm), subPaint, leftW), padX, h * 0.30f + titlePaint.textSize * 1.3f, subPaint) }
+                else canvas.drawText(ellipsize(context.getString(R.string.clock_no_alarms), subPaint, leftW), padX, h * 0.30f, subPaint)
                 if (t.showLabel) t.customLabel?.takeIf { it.isNotBlank() }?.let { canvas.drawText(it, padX, h - 18f, labelPaint) }
             }
         }
@@ -1279,17 +1280,17 @@ class TileView @JvmOverloads constructor(
 
         val timeStr = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date(time))
         val conditionLabel = when(next) {
-            com.metrolauncher.model.WeatherCondition.CLEAR -> if (snap.isNight) "Clear" else "Sunny"
-            com.metrolauncher.model.WeatherCondition.PARTLY_CLOUDY -> "Partly Cloudy"
-            com.metrolauncher.model.WeatherCondition.CLOUDY -> "Cloudy"
-            com.metrolauncher.model.WeatherCondition.RAIN -> "Rain"
-            com.metrolauncher.model.WeatherCondition.SNOW -> "Snow"
-            com.metrolauncher.model.WeatherCondition.THUNDERSTORM -> "Storm"
-            com.metrolauncher.model.WeatherCondition.FOG -> "Fog"
+            com.metrolauncher.model.WeatherCondition.CLEAR -> if (snap.isNight) context.getString(R.string.weather_clear_night) else context.getString(R.string.weather_clear_day)
+            com.metrolauncher.model.WeatherCondition.PARTLY_CLOUDY -> context.getString(R.string.weather_partly_cloudy)
+            com.metrolauncher.model.WeatherCondition.CLOUDY -> context.getString(R.string.weather_cloudy)
+            com.metrolauncher.model.WeatherCondition.RAIN -> context.getString(R.string.weather_rain)
+            com.metrolauncher.model.WeatherCondition.SNOW -> context.getString(R.string.weather_snow)
+            com.metrolauncher.model.WeatherCondition.THUNDERSTORM -> context.getString(R.string.weather_thunderstorm)
+            com.metrolauncher.model.WeatherCondition.FOG -> context.getString(R.string.weather_fog)
             else -> ""
         }
         
-        val label = "$conditionLabel at $timeStr"
+        val label = context.getString(R.string.weather_at_time, conditionLabel, timeStr)
 
         // Larger, more readable font
         val tp = textPaint(Color.WHITE, 32f * fontScale, Paint.Align.CENTER, true)
